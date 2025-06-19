@@ -1,0 +1,17 @@
+Package: tmbayes
+Title: User-Friendly Bayesian-like Inference with TMB
+Version: 0.1.0
+Author: Tu Nombre <tu.email@example.com>
+Maintainer: Tu Nombre <tu.email@example.com>
+Description: Simplifies fitting of complex TMB models (like GLMMs) by using the Laplace Approximation, making TMB more accessible to statisticians.
+License: MIT
+Encoding: UTF-8
+RoxygenNote: 7.3.1
+Imports: 
+    TMB,
+    Matrix
+LinkingTo: 
+    TMB,
+    RcppEigen
+Depends:
+    R (>= 4.0.0)
