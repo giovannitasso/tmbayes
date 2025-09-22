@@ -83,7 +83,7 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
     data = tmb_data, 
     parameters = tmb_params,
     random = "u",
-    DLL = "tmbayes", # <-- CAMBIO 1: Apunta al nuevo nombre del paquete
+    DLL = "tmbayes",
     silent = TRUE
   )
   
@@ -124,7 +124,7 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
     obj = obj
   )
   
-  class(output) <- "tmbayes_fit" # <-- CAMBIO 2: La clase ahora refleja el nuevo nombre
+  class(output) <- "tmbayes_fit" 
   
   return(output)
 }
@@ -135,8 +135,8 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
 #' @param ... Additional arguments passed to `print`.
 #' @method print tmbayes_fit
 #' @export
-print.tmbayes_fit <- function(x, ...) { # <-- CAMBIO 3: El nombre de la función de impresión
-  cat("Fit from 'tmbayes' package\n\n") # <-- CAMBIO 4: Texto actualizado
+print.tmbayes_fit <- function(x, ...) {
+  cat("Fit from 'tmbayes' package\n\n") 
   cat("Formula: Binomial GLMM with random intercepts\n")
   cat("Optimizer status:", x$opt$message, "\n\n")
   
