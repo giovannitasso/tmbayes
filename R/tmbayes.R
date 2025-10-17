@@ -8,6 +8,7 @@
 #' @param family Currently, only `family = "binomial"` is supported.
 #'
 #' @return An object of class `tmbayes_fit`.
+#' @import Matrix                # <--- AÑADE ESTA LÍNEA
 #' @importFrom stats model.response
 #' @importFrom methods as
 #' @export
