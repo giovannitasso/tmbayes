@@ -158,8 +158,11 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
 #' @method print tmbayes_fit
 #' @export
 print.tmbayes_fit <- function(x, ...) {
-  cat("Fit from 'tmbayes' package\n\n") 
-  cat("Formula: Binomial GLMM with random intercepts\n")
+
+  cat("Laplace Approximation Fit from 'tmbayes'\n\n") 
+  
+
+  cat("Formula: Binomial GLMM\n")
   cat("Optimizer status:", x$opt$message, "\n\n")
   
   cat("Parameter Estimates:\n")
