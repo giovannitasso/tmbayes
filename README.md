@@ -2,19 +2,19 @@
 
 `tmbayes` is an R package designed to make the powerful **Template Model Builder (TMB)** engine accessible and easy to use for applied statisticians and researchers. It provides a high-level formula interface for common statistical models, allowing you to leverage TMB's speed and flexibility without writing or compiling C++ code yourself.
 
----
+
 ## The Motivation
 
 TMB is an outstanding tool for fitting complex statistical models. However, its reliance on C++ templates can present a steep learning curve for those who primarily work in R. The process of writing the model syntax in C++, compiling it, and linking it within an R session can be a significant barrier.
 
 `tmbayes` bridges this gap by providing a simple, formula-based interface that handles all the C++ and TMB complexity behind the scenes.
 
----
+
 ## Core Idea: Laplace Approximation for Bayesian-like Inference
 
 This package uses the **Laplace Approximation**, a method that provides a fast and accurate Gaussian approximation to the posterior distribution of model parameters. This gives results that are "Bayesian-like" in their interpretation but are obtained with the speed of likelihood optimization. The name `tmbayes` reflects this connection between TMB and the Bayesian-esque nature of the Laplace Approximation.
 
----
+
 ## Installation
 
 You can install the development version of `tmbayes` from GitHub with:
@@ -99,7 +99,7 @@ sigma_u        0.8915     0.1652   5.3965   0.0000
 ```
 *Note: The estimated `sigma_u` represents the standard deviation for all random effects combined, as the current model uses a single variance component.*
 
----
+
 ## Features
 
 * **Formula Interface:** Fit complex models using the standard R formula syntax (e.g., `y ~ x + (x | group)`), just like in `lme4`.
@@ -107,7 +107,7 @@ sigma_u        0.8915     0.1652   5.3965   0.0000
 * **Fast Estimation:** Leverages TMB's high-performance C++ backend for speed.
 * **Extensible:** Provides a clear framework for adding new model families in the future.
 
----
+
 ## Available Models
 
 Currently, `tmbayes` provides the main `tmbayes()` function, which supports:
@@ -115,7 +115,7 @@ Currently, `tmbayes` provides the main `tmbayes()` function, which supports:
 * **Binomial GLMMs:** For binary outcomes (0/1).
 * **Flexible Random Effects:** Supports random intercepts `(1 | group)`, random slopes `(0 + x | group)`, and both combined `(x | group)`.
 
----
+
 ## Contributing
 
 Feedback, bug reports, and feature requests are welcome! Please open an issue on the [GitHub repository issues page](https://github.com/giovannitasso/tmbayes/issues).
