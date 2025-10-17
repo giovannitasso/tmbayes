@@ -37,42 +37,58 @@ Here is a complete example of how to simulate data and fit a Generalized Linear 
 # 1. Load the library
 library(tmbayes)
 
-# 2. Simulate data for a mixed-effects model
-# We'll simulate data from 10 groups, with 20 observations per group.
+# 2. Simulate data
+# We'll simulate data where the effect of predictor 'x' varies across groups.
 set.seed(1234)
 n_groups <- 10
-n_per_group <- 20
+n_per_group <- 30 # More data helps estimate random slopes
+n_tot <- n_groups * n_per_group
 
-group <- rep(1:n_groups, each = n_per_group) # Grouping variable
-x <- rnorm(n_groups * n_per_group)          # A fixed-effect predictor
+group <- rep(1:n_groups, each = n_per_group)
+x <- rnorm(n_tot) 
 
-# True parameter values
+# True fixed effects
 beta0_true <- -1.0  # Intercept
-beta1_true <- 1.5   # Slope for x
-sigma_u_true <- 1.0 # Standard deviation of random effects
+beta1_true <- 1.5   # Average slope for x
 
-# Simulate random intercepts for each group
-u_true <- rnorm(n_groups, 0, sigma_u_true)
+# True random effects standard deviations
+sigma_intercept_true <- 1.0 # Variability of intercepts across groups
+sigma_slope_true <- 0.5     # Variability of slopes across groups
 
-# Calculate the linear predictor and probabilities
-eta <- beta0_true + beta1_true * x + u_true[group]
+# Simulate random effects for each group from a Normal distribution
+u_intercepts <- rnorm(n_groups, 0, sigma_intercept_true) # Random intercepts
+u_slopes <- rnorm(n_groups, 0, sigma_slope_true)       # Random slopes
+
+# Calculate linear predictor with group-specific intercepts and slopes
+eta <- (beta0_true + u_intercepts[group]) + (beta1_true + u_slopes[group]) * x
 p <- 1 / (1 + exp(-eta))
-y <- rbinom(n_groups * n_per_group, size = 1, prob = p) # Binary response
+y <- rbinom(n_tot, size = 1, prob = p)
 
 # 3. Define design matrices
-# The 'X' matrix is for fixed effects (Intercept and x)
+# Fixed effects matrix (X)
 X <- cbind(1, x)
 colnames(X) <- c("Intercept", "x_variable")
 
-# The 'Z' matrix is for random effects (a random intercept for each group)
-Z <- model.matrix(~ factor(group) - 1)
+# Random effects matrix (Z) for intercepts and slopes
+# This requires manual construction. The vector of random effects 'u' in TMB will be
+# structured as [intercept_1, ..., intercept_10, slope_1, ..., slope_10].
+Z <- matrix(0, nrow = n_tot, ncol = n_groups * 2)
 
-# 4. Fit the model using the package's main function
-# All the C++ compilation and TMB machinery is handled internally here.
+for (i in 1:n_tot) {
+  group_idx <- group[i]
+  # Part 1: Assign the random intercept effect
+  Z[i, group_idx] <- 1 
+  # Part 2: Assign the random slope effect, multiplied by the predictor value 'x'
+  Z[i, n_groups + group_idx] <- x[i]
+}
+
+# 4. Fit the model
+# Our C++ model assumes all 20 random effects (10 intercepts + 10 slopes)
+# are drawn from a single distribution with one standard deviation, sigma_u.
+# This is an approximation of the true data-generating process.
 fit <- fit_binomial_glmm(y = y, X = X, Z = Z)
 
 # 5. Print the results
-# The custom print method provides a clean and readable summary.
 print(fit)
 ```
 
