@@ -120,4 +120,4 @@ Currently, `tmbayes` provides the main `tmbayes()` function, which supports:
 
 Feedback, bug reports, and feature requests are welcome! Please open an issue on the [GitHub repository issues page](https://github.com/giovannitasso/tmbayes/issues).
 
-Feedback, bug reports, and feature requests are welcome! Please open an issue on the [GitHub repository issues page](https://github.com/giovannitasso/tmbayes/issues).
+
