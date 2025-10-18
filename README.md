@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="man/figures/logotmbayes.png" height="130" />
+  <img src="man/figures/logotmbayes.png" height="160" />
 </p>
 
 # tmbayes
