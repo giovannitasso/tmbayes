@@ -2,7 +2,7 @@
   <img src="man/figures/logotmbayes.png" height="130" />
 </p>
 
-## tmbayes
+# tmbayes
 
 `tmbayes` is an R package designed to make the powerful **Template Model Builder (TMB)** engine accessible and easy to use for applied statisticians and researchers. It provides a high-level formula interface for common statistical models, allowing you to leverage TMB's speed and flexibility without writing or compiling C++ code yourself.
 
