@@ -13,12 +13,12 @@
 #' @param initial_logsigma_u A single numeric value for the starting value of the log standard
 #'        deviation of the random effects. Defaults to 0.
 #'
-#' @return A list object of class `tmbayes_fit` containing the model results.
+#' @return A list object of class `tmbr_fit` containing the model results.
 #' @export
 #' @examples
 #' \dontrun{
 #' # --- Example 1: Random Intercepts Only ---
-#' library(tmbayes)
+#' library(tmbrmodels)
 #' set.seed(1234)
 #' n_groups <- 10
 #' n_per_group <- 20
@@ -67,7 +67,7 @@
 #' print(fit_slopes)
 #' }
 fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u = 0) {
-  # ... (el resto de tu función no necesita cambios)
+
   # ---- 1. Data Validation and Preparation ----
   if (!is.numeric(y) || !all(y %in% c(0, 1))) {
     stop("Response variable 'y' must be a numeric vector of 0s and 1s.")
@@ -104,7 +104,7 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
     data = tmb_data, 
     parameters = tmb_params,
     random = "u",
-    DLL = "tmbayes",
+    DLL = "tmbrmodels",
     silent = TRUE
   )
   
@@ -145,21 +145,21 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
     obj = obj
   )
   
-  class(output) <- "tmbayes_fit" 
+  class(output) <- "tmbr_fit" 
   
   return(output)
 }
 
 
-#' @title Print method for tmbayes_fit objects
+#' @title Print method for tmbr_fit objects
 #' @description A custom print method to display a concise summary of the fitted model.
-#' @param x An object of class `tmbayes_fit`.
+#' @param x An object of class `tmbr_fit`.
 #' @param ... Additional arguments passed to `print`.
-#' @method print tmbayes_fit
+#' @method print tmbr_fit
 #' @export
-print.tmbayes_fit <- function(x, ...) {
+print.tmbr_fit <- function(x, ...) {
 
-  cat("Laplace Approximation Fit from 'tmbayes'\n\n") 
+  cat("Laplace Approximation Fit from 'tmbrmodels'\n\n") 
   
 
   cat("Formula: Binomial GLMM\n")
