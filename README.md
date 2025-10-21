@@ -1,35 +1,35 @@
 <p align="center">
-  <img src="man/figures/logotmbayes.png" height="160" />
+  <img src="man/figures/logotmbrmodels.png" height="160" />
 </p>
 
-# tmbayes
+# tmbrmodels
 
-`tmbayes` is an R package designed to make the powerful **Template Model Builder (TMB)** engine accessible and easy to use for applied statisticians and researchers. It provides a high-level formula interface for common statistical models, allowing you to leverage TMB's speed and flexibility without writing or compiling C++ code yourself.
+`tmbrmodels` is an R package designed to make the powerful **Template Model Builder (TMB)** engine accessible and easy to use for applied statisticians and researchers. It provides a high-level formula interface for common statistical models, allowing you to leverage TMB's speed and flexibility without writing or compiling C++ code yourself.
 
 
 ## The Motivation
 
 TMB is an outstanding tool for fitting complex statistical models. However, its reliance on C++ templates can present a steep learning curve for those who primarily work in R. The process of writing the model syntax in C++, compiling it, and linking it within an R session can be a significant barrier.
 
-`tmbayes` bridges this gap by providing a simple, formula-based interface that handles all the C++ and TMB complexity behind the scenes.
+`tmbrmodels` bridges this gap by providing a simple, formula-based interface that handles all the C++ and TMB complexity behind the scenes.
 
 
 ## Core Idea: Laplace Approximation for Bayesian-like Inference
 
-This package uses the **Laplace Approximation**, a method that provides a fast and accurate Gaussian approximation to the posterior distribution of model parameters. This gives results that are "Bayesian-like" in their interpretation but are obtained with the speed of likelihood optimization. The name `tmbayes` reflects this connection between TMB and the Bayesian-esque nature of the Laplace Approximation.
+This package uses the **Laplace Approximation**, a method that provides a fast and accurate Gaussian approximation to the posterior distribution of model parameters. This gives results that are "Bayesian-like" in their interpretation but are obtained with the speed of likelihood optimization. The name `tmbrmodels` reflects this connection between TMB and the Bayesian-esque nature of the Laplace Approximation.
 
 
 ## Installation
 
-You can install the development version of `tmbayes` from GitHub with:
+You can install the development version of `tmbrmodels` from GitHub with:
 
 ```r
 # First, ensure you have the devtools package
 # install.packages("devtools")
 
-# Now, install tmbayes
+# Now, install tmbrmodels
 # This will also install its dependencies, like TMB and lme4.
-devtools::install_github("giovannitasso/tmbayes")
+devtools::install_github("giovannitasso/tmbrmodels")
 
 ```
 
@@ -44,7 +44,7 @@ Here is a complete example of how to simulate data and fit a Generalized Linear 
 
 ```r
 # 1. Load the library
-library(tmbayes)
+library(tmbrmodels)
 
 # 2. Simulate data
 # We'll create a data frame, which is the standard for formula-based modeling in R.
@@ -76,7 +76,7 @@ sim_data$y <- rbinom(nrow(sim_data), size = 1, prob = p)
 
 # 3. Fit the model using the simple formula interface
 # The complexity of creating design matrices is handled automatically!
-fit <- tmbayes(
+fit <- tmbr(
   formula = y ~ x + (x | group), 
   data = sim_data,
   family = "binomial"
@@ -90,7 +90,7 @@ print(fit)
 ### Expected Output
 
 ```
-Laplace Approximation Fit from 'tmbayes'
+Laplace Approximation Fit from 'tmbrmodels'
 
 Formula: Binomial GLMM
 Optimizer status: relative convergence (4) 
@@ -114,7 +114,7 @@ sigma_u        0.8915     0.1652   5.3965   0.0000
 
 ## Available Models
 
-Currently, `tmbayes` provides the main `tmbayes()` function, which supports:
+Currently, `tmbrmodels` provides the main `tmbr()` function, which supports:
 
 * **Binomial GLMMs:** For binary outcomes (0/1).
 * **Flexible Random Effects:** Supports random intercepts `(1 | group)`, random slopes `(0 + x | group)`, and both combined `(x | group)`.
@@ -122,6 +122,6 @@ Currently, `tmbayes` provides the main `tmbayes()` function, which supports:
 
 ## Contributing
 
-Feedback, bug reports, and feature requests are welcome! Please open an issue on the [GitHub repository issues page](https://github.com/giovannitasso/tmbayes/issues).
+Feedback, bug reports, and feature requests are welcome! Please open an issue on the [GitHub repository issues page](https://github.com/giovannitasso/tmbrmodels/issues).
 
 
