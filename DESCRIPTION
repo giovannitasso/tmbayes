@@ -1,4 +1,4 @@
-Package: tmbayes
+Package: tmbrmodels
 Title: User-Friendly Bayesian-like Inference with TMB
 Version: 0.1.0
 Author: Giovanni Tasso Romanoff <giovanni.tasso.r@gmail.com>
