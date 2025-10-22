@@ -50,7 +50,7 @@ fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
     betas = initial_betas, 
     u = rep(0, ncol(Z)),
     log_stdevs = rep(0, n_reff_per_group),
-    transf_corr = 0
+    transf_rho = 0 # Changed from transf_corr to match C++
   )
   
   # ---- 3. TMB Model Fitting ----
