@@ -1,6 +1,6 @@
 #include <TMB.hpp>
 #include <vector>
-#include "density.hpp"
+#include "TMB/library/density.hpp"
 
 template<class Type>
 Type objective_function<Type>::operator() () {
