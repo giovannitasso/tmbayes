@@ -38,7 +38,7 @@ fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
     n_groups = n_groups
   )
   
-  # ----- 2. Parameter Initialization -----
+  # ---- 2. Parameter Initialization ----
   if (is.null(initial_betas)) {
     initial_betas <- rep(0, ncol(X))
   }
@@ -50,7 +50,7 @@ fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
     betas = initial_betas, 
     u = rep(0, ncol(Z)),
     log_stdevs = rep(0, n_reff_per_group),
-    transf_rho = 0 # Changed from transf_corr to match C++
+    transf_rho = 0 
   )
   
   # ---- 3. TMB Model Fitting ----
@@ -86,16 +86,9 @@ fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
   random_coeffs_stdevs <- summary_report[stdev_idx, , drop = FALSE]
   random_coeffs_rho <- summary_report[rho_idx, , drop = FALSE]
   
-  # Assign names (assuming 2 random effects: intercept and first slope)
-  # A more robust solution would parse random effect names from formula later
-  re_names <- colnames(Z)[1:n_reff_per_group]
-  if (is.null(re_names) || length(re_names) != n_reff_per_group) {
-      re_names <- c("(Intercept)", "slope_1") # Default names
-      warning("Could not automatically determine random effect names. Using defaults.")
-  }
-  
-  rownames(random_coeffs_stdevs) <- paste0("sigma_", re_names)
-  rownames(random_coeffs_rho) <- paste0("corr_", re_names[1], "_", re_names[2])
+  # Assign explicit names assuming Intercept and 'x' slope
+  rownames(random_coeffs_stdevs) <- c("sigma_(Intercept)", "sigma_x") 
+  rownames(random_coeffs_rho) <- "corr_(Intercept)_x"
   
   random_coeffs <- rbind(random_coeffs_stdevs, random_coeffs_rho)
 
