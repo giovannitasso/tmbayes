@@ -1,14 +1,14 @@
-#' @title Fit a Binomial Generalized Linear Mixed Model with TMB
+#' @title Fit a Binomial Generalized Linear Mixed Model with TMB (Simple Version)
 #' @description This function fits a binomial GLMM using a pre-compiled TMB model.
-#' It can handle both random intercepts and random slopes, depending on the
-#' structure of the design matrix Z.
+#' This version uses a simplified random effects structure (single variance component).
 #'
 #' @param y A numeric vector representing the binary response variable (0s and 1s).
 #' @param X A numeric matrix of fixed effects covariates. An intercept is recommended.
 #' @param Z A numeric matrix for the random effects design.
-#' @param n_groups The number of grouping levels for the random effects.
 #' @param initial_betas A numeric vector for the starting values of the fixed effects (betas).
 #'        If NULL, defaults to zeros.
+#' @param initial_logsigma_u A single numeric value for the starting value of the log standard
+#'        deviation of the random effects. Defaults to 0.
 #'
 #' @return A list object of class `tmbr_fit` containing the model results.
 #' @export
@@ -16,7 +16,7 @@
 #' \dontrun{
 #' # This function is typically called internally by tmbr().
 #' }
-fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
+fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u = 0) {
 
   # ---- 1. Data Validation and Preparation ----
   if (!is.numeric(y) || !all(y %in% c(0, 1))) {
@@ -35,8 +35,8 @@ fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
   tmb_data <- list(
     y = y, 
     X = X, 
-    Z = Z,
-    n_groups = n_groups
+    Z = Z
+    # n_groups removed for this simple version
   )
   
   # ---- 2. Parameter Initialization ----
@@ -44,14 +44,11 @@ fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
     initial_betas <- rep(0, ncol(X))
   }
   
-  # Assumes 2 random effects per group (intercept and slope)
-  n_reff_per_group = 2 
-  
+  # Reverted to simple parameterization
   tmb_params <- list(
     betas = initial_betas, 
     u = rep(0, ncol(Z)),
-    log_stdevs = rep(0, n_reff_per_group),
-    transf_corr = 0
+    logsigma_u = initial_logsigma_u 
   )
   
   # ---- 3. TMB Model Fitting ----
@@ -80,21 +77,10 @@ fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
   fixed_coeffs <- summary_report[correct_fixed_eff_idx, , drop = FALSE]
   rownames(fixed_coeffs) <- if (!is.null(colnames(X))) colnames(X) else paste0("beta_", 1:nrow(fixed_coeffs))
   
-  # 2. Random Effects Variance Components
-  stdev_idx <- which(rownames(summary_report) == "stdevs")
-  rho_idx <- which(rownames(summary_report) == "rho")
-  
-  random_coeffs_stdevs <- summary_report[stdev_idx, , drop = FALSE]
-  random_coeffs_rho <- summary_report[rho_idx, , drop = FALSE]
-  
-  # Assign names (assuming 2 random effects: intercept and first slope)
-  re_names <- colnames(Z)[1:n_reff_per_group]
-  if (is.null(re_names)) re_names <- c("(Intercept)", "slope_1")
-  
-  rownames(random_coeffs_stdevs) <- paste0("sigma_", re_names)
-  rownames(random_coeffs_rho) <- paste0("corr_", re_names[1], "_", re_names[2])
-  
-  random_coeffs <- rbind(random_coeffs_stdevs, random_coeffs_rho)
+  # 2. Random Effects Variance Component (Simple Version)
+  random_eff_idx <- which(rownames(summary_report) == "sigma_u")
+  random_coeffs <- summary_report[random_eff_idx, , drop = FALSE]
+  rownames(random_coeffs) <- "sigma_u"
 
   # 3. Combine and Format
   final_summary <- rbind(fixed_coeffs, random_coeffs)
