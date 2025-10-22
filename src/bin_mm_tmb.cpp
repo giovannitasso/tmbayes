@@ -1,4 +1,5 @@
 #include <TMB.hpp>
+#include <vector>
 
 template<class Type>
 Type objective_function<Type>::operator() () {
