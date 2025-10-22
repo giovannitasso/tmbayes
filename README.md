@@ -14,10 +14,9 @@ TMB is an outstanding tool for fitting complex statistical models. However, its 
 `tmbrmodels` bridges this gap by providing a simple, formula-based interface that handles all the C++ and TMB complexity behind the scenes.
 
 
-## Core Idea: Laplace Approximation for Bayesian-like Inference
+## Core Idea
 
 This package uses the **Laplace Approximation**, a method that provides a fast and accurate Gaussian approximation to the posterior distribution of model parameters. This gives results that are "Bayesian-like" in their interpretation but are obtained with the speed of likelihood optimization.
-
 
 ## Installation
 
@@ -102,6 +101,7 @@ x                    1.6083     0.2224   7.2311   0.0000
 sigma_(Intercept)    0.9588     0.2974   3.2239   0.0013
 sigma_x              0.4011     0.2079   1.9293   0.0537
 corr_(Intercept)_x   0.1523     0.4682   0.3253   0.7450
+
 ```
 *Note: z values and p-values for variance components are often not interpreted in the same way as fixed effects.*
 
@@ -116,10 +116,14 @@ corr_(Intercept)_x   0.1523     0.4682   0.3253   0.7450
 
 ## Available Models
 
-Currently, `tmbrmodels` provides the main `tmbr()` function, which supports:
+The main `tmbr()` function uses the `family` argument to select the model:
 
-* **Binomial GLMMs:** For binary outcomes (0/1).
-* **Flexible Random Effects:** Supports random intercepts `(1 | group)`, random slopes `(0 + x | group)`, and both combined `(x | group)`.
+* **`family = "binomial"`**
+    * **Model:** Generalized Linear Mixed Model (GLMM) for binary (0/1) outcomes.
+    * **Link Function:** `logit`
+    * **Random Effects:** Supports full covariance structures for intercepts and slopes (e.g., `(x | group)`).
+
+*(Esta sección se expandirá a medida que se agreguen más familias, como Poisson).*
 
 
 ## Contributing
