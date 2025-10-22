@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="man/figures/logotmbrmodels.png" height="160" />
+  <img src="man/figures/tmbrmodelslogo.png" height="160" />
 </p>
 
 # tmbrmodels
