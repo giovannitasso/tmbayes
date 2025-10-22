@@ -35,8 +35,12 @@ Type objective_function<Type>::operator() () {
   
   // Linear predictor
   vector<Type> eta = X * betas + Z * u;
-  vector<Type> p = 1.0 / (1.0 + exp(-eta));
-
+  
+  // Apply the inverse-logit link function to get probabilities
+  // We must explicitly cast the Eigen expression to vector<Type>
+  // to avoid lazy-evaluation template errors, as per TMB docs.
+  vector<Type> p = vector<Type>(1.0 / (1.0 + exp(-eta)));
+  
 //==========================
 // LIKELIHOOD SECTION
 //==========================
