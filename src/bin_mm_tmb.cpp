@@ -1,4 +1,3 @@
-#include <vector>
 #include <TMB.hpp>
 
 template<class Type>
