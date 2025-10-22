@@ -16,7 +16,7 @@ TMB is an outstanding tool for fitting complex statistical models. However, its 
 
 ## Core Idea: Laplace Approximation for Bayesian-like Inference
 
-This package uses the **Laplace Approximation**, a method that provides a fast and accurate Gaussian approximation to the posterior distribution of model parameters. This gives results that are "Bayesian-like" in their interpretation but are obtained with the speed of likelihood optimization. The name `tmbrmodels` reflects this connection between TMB and the Bayesian-esque nature of the Laplace Approximation.
+This package uses the **Laplace Approximation**, a method that provides a fast and accurate Gaussian approximation to the posterior distribution of model parameters. This gives results that are "Bayesian-like" in their interpretation but are obtained with the speed of likelihood optimization. 
 
 
 ## Installation
