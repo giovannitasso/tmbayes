@@ -38,7 +38,7 @@ fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
     n_groups = n_groups
   )
   
-  # ---- 2. Parameter Initialization ----
+  # ----- 2. Parameter Initialization -----
   if (is.null(initial_betas)) {
     initial_betas <- rep(0, ncol(X))
   }
