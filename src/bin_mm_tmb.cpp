@@ -1,16 +1,15 @@
 #include <TMB.hpp>
 
-
 template<class Type>
 Type objective_function<Type>::operator() () {
   
 //==========================
 // DATA SECTION
 //==========================
-  DATA_VECTOR(y);
-  DATA_MATRIX(X);
-  DATA_MATRIX(Z);
-  DATA_INTEGER(n_groups); // Number of groups
+  DATA_VECTOR(y);          // binary response
+  DATA_MATRIX(X);          // design matrix for fixed effects
+  DATA_MATRIX(Z);          // random effects design matrix
+  // DATA_INTEGER(n_groups); // No necesario para esta versión simple
 
   
 //==========================
@@ -18,26 +17,21 @@ Type objective_function<Type>::operator() () {
 //==========================
   PARAMETER_VECTOR(betas);  // fixed effects
   PARAMETER_VECTOR(u);      // random effects
-  
-  // Parameters for unstructured covariance matrix
-  // Assumes 2 random effects per group (intercept and slope)
-  PARAMETER_VECTOR(log_stdevs);   // log(stdev) vector [log(sigma_int), log(sigma_slope)]
-  PARAMETER(transf_corr);      // Transformed correlation parameter
+  PARAMETER(logsigma_u);    // log standard deviation of random effects (versión simple)
+  // PARAMETER_VECTOR(log_stdevs); // Eliminado temporalmente
+  // PARAMETER(transf_corr);      // Eliminado temporalmente
 
 
 //==========================
 // PRELIMINARY CALCULATIONS
 //==========================
-  
-  // Setup for MVN density
-  int n_reff_per_group = 2; 
-  density::UNSTRUCTURED_CORR_t<Type> nldens = density::UNSTRUCTURED_CORR_t<Type>(log_stdevs, transf_corr);
+  // Versión simple:
+  Type sigma_u = exp(logsigma_u);
   
   // Linear predictor
   vector<Type> eta = X * betas + Z * u;
   
-  // Apply the inverse-logit link function to get probabilities
-  // Cast explícito para evitar errores de evaluación perezosa (lazy-evaluation).
+  // Apply the inverse-logit link function (Cast necesario)
   vector<Type> p = vector<Type>(1.0 / (1.0 + exp(-eta))); 
 
 //==========================
@@ -45,16 +39,10 @@ Type objective_function<Type>::operator() () {
 //==========================
   Type nll = 0.0;
 
-  // Prior for random effects: u ~ MVN(0, Sigma)
-  // We assume u is ordered as [int_g1, ..., int_gN, slope_g1, ..., slope_gN]
-  for(int i = 0; i < n_groups; ++i){
-    vector<Type> u_group_i(n_reff_per_group);
-    u_group_i(0) = u(i);              // Intercept for group i
-    u_group_i(1) = u(i + n_groups);   // Slope for group i
-    nll += nldens(u_group_i); // Adds *negative* log-density
-  }
+  // Prior for random effects (versión simple: dnorm)
+  nll -= sum(dnorm(u, Type(0.0), sigma_u, true));
 
-  // Likelihood for the response: y_i ~ Binomial(1, p_i)
+  // Likelihood for the response (sin cambios)
   nll -= sum(dbinom(y, Type(1.0), p, true));
 
 //============================   
@@ -64,16 +52,9 @@ Type objective_function<Type>::operator() () {
   REPORT(p);       
   REPORT(eta);
   REPORT(u);
+  REPORT(sigma_u); // Reportar sigma_u simple
   
-  // Report variance components
-  vector<Type> stdevs = exp(log_stdevs);
-  Type rho = nldens.corr(0, 1);
-  
-  REPORT(stdevs);
-  REPORT(rho);
-  
-  ADREPORT(stdevs);
-  ADREPORT(rho);
+  ADREPORT(sigma_u); // ADReport para sigma_u simple
 
   return nll;
 }
