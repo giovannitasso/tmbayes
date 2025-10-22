@@ -59,28 +59,23 @@ tmbr <- function(formula, data, family = "binomial") {
   if (family != "binomial") {
     stop("Currently, only the 'binomial' family is supported.")
   }
-  # Check if lme4 is installed, as it's crucial
   if (!requireNamespace("lme4", quietly = TRUE)) {
     stop("The 'lme4' package is required. Please install it with: install.packages('lme4')")
   }
 
   # --- 2. Formula Parsing with lme4 ---
-  # lme4::lFormula does all the heavy lifting of parsing the mixed-effects formula.
   lmod <- lme4::lFormula(formula = formula, data = data)
 
-  # Extract the components we need
-  y <- stats::model.response(lmod$fr) # Response vector
-  X <- lmod$X                        # Fixed-effects matrix
-  
-  # lme4's Z matrix is a transposed sparse matrix (Zt).
-  # We convert it to a standard dense matrix to pass to TMB.
+  y <- stats::model.response(lmod$fr)
+  X <- lmod$X
   Z <- as(t(lmod$reTrms$Zt), "matrix")
+  
+  # Extract the number of groups
+  n_groups <- nlevels(lmod$reTrms$flist[[1]])
 
   # --- 3. Call the model fitting engine ---
-  # Now that we have y, X, and Z, we just call your original function.
-  fit <- fit_binomial_glmm(y = y, X = X, Z = Z)
+  fit <- fit_binomial_glmm(y = y, X = X, Z = Z, n_groups = n_groups)
 
   # --- 4. Return the result ---
-  # The output object already has the correct class and print method.
   return(fit)
 }
