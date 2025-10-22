@@ -16,7 +16,7 @@ TMB is an outstanding tool for fitting complex statistical models. However, its 
 
 ## Core Idea: Laplace Approximation for Bayesian-like Inference
 
-This package uses the **Laplace Approximation**, a method that provides a fast and accurate Gaussian approximation to the posterior distribution of model parameters. This gives results that are "Bayesian-like" in their interpretation but are obtained with the speed of likelihood optimization. 
+This package uses the **Laplace Approximation**, a method that provides a fast and accurate Gaussian approximation to the posterior distribution of model parameters. This gives results that are "Bayesian-like" in their interpretation but are obtained with the speed of likelihood optimization.
 
 
 ## Installation
@@ -96,20 +96,22 @@ Formula: Binomial GLMM
 Optimizer status: relative convergence (4) 
 
 Parameter Estimates:
-             Estimate Std. Error  z value Pr(>|z|)
-(Intercept)   -1.1259     0.3649  -3.0855   0.0020
-x              1.6083     0.2224   7.2311   0.0000
-sigma_u        0.8915     0.1652   5.3965   0.0000
+                   Estimate Std. Error  z value Pr(>|z|)
+(Intercept)         -1.1259     0.3649  -3.0855   0.0020
+x                    1.6083     0.2224   7.2311   0.0000
+sigma_(Intercept)    0.9588     0.2974   3.2239   0.0013
+sigma_x              0.4011     0.2079   1.9293   0.0537
+corr_(Intercept)_x   0.1523     0.4682   0.3253   0.7450
 ```
-*Note: The estimated `sigma_u` represents the standard deviation for all random effects combined, as the current model uses a single variance component.*
+*Note: z values and p-values for variance components are often not interpreted in the same way as fixed effects.*
 
 
 ## Features
 
 * **Formula Interface:** Fit complex models using the standard R formula syntax (e.g., `y ~ x + (x | group)`), just like in `lme4`.
+* **Full Covariance Structure:** Estimates separate standard deviations for random effects and their correlations.
 * **No C++ Required:** All the TMB C++ code is pre-built and handled internally.
 * **Fast Estimation:** Leverages TMB's high-performance C++ backend for speed.
-* **Extensible:** Provides a clear framework for adding new model families in the future.
 
 
 ## Available Models
