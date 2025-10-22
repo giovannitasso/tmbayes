@@ -5,68 +5,18 @@
 #'
 #' @param y A numeric vector representing the binary response variable (0s and 1s).
 #' @param X A numeric matrix of fixed effects covariates. An intercept is recommended.
-#' @param Z A numeric matrix for the random effects design. For a simple random
-#'        intercept model, this is the model matrix for the group intercepts. For a
-#'        random slope model, this matrix will have more columns.
+#' @param Z A numeric matrix for the random effects design.
+#' @param n_groups The number of grouping levels for the random effects.
 #' @param initial_betas A numeric vector for the starting values of the fixed effects (betas).
 #'        If NULL, defaults to zeros.
-#' @param initial_logsigma_u A single numeric value for the starting value of the log standard
-#'        deviation of the random effects. Defaults to 0.
 #'
 #' @return A list object of class `tmbr_fit` containing the model results.
 #' @export
 #' @examples
 #' \dontrun{
-#' # --- Example 1: Random Intercepts Only ---
-#' library(tmbrmodels)
-#' set.seed(1234)
-#' n_groups <- 10
-#' n_per_group <- 20
-#' n_tot <- n_groups * n_per_group
-#' 
-#' group <- rep(1:n_groups, each = n_per_group)
-#' x <- rnorm(n_tot)
-#' u_true <- rnorm(n_groups, 0, 1.0) # Random intercepts
-#' 
-#' eta <- -1.0 + 1.5 * x + u_true[group]
-#' p <- 1 / (1 + exp(-eta))
-#' y <- rbinom(n_tot, size = 1, prob = p)
-#' 
-#' X <- cbind(1, x)
-#' Z_intercept <- model.matrix(~ factor(group) - 1)
-#' 
-#' fit_intercepts <- fit_binomial_glmm(y = y, X = X, Z = Z_intercept)
-#' print(fit_intercepts)
-#'
-#' # --- Example 2: Random Intercepts and Random Slopes ---
-#' set.seed(1234)
-#' # Simulate random slopes for x that vary by group
-#' u_slope_true <- rnorm(n_groups, 0, 0.5)
-#' 
-#' # Linear predictor now includes a random slope component
-#' eta_slopes <- -1.0 + 1.5 * x + u_true[group] + u_slope_true[group] * x
-#' p_slopes <- 1 / (1 + exp(-eta_slopes))
-#' y_slopes <- rbinom(n_tot, size = 1, prob = p_slopes)
-#'
-#' # Build the Z matrix for random intercepts AND slopes
-#' # We need to construct this matrix manually.
-#' # Each observation needs its group's intercept and its group's slope effect.
-#' Z_slopes <- matrix(0, nrow = n_tot, ncol = n_groups * 2)
-#' for (i in 1:n_tot) {
-#'   group_idx <- group[i]
-#'   # Column for the intercept of the i-th observation's group
-#'   Z_slopes[i, group_idx] <- 1
-#'   # Column for the slope of the i-th observation's group
-#'   Z_slopes[i, n_groups + group_idx] <- x[i]
+#' # This function is typically called internally by tmbr().
 #' }
-#' 
-#' # Fit the model
-#' # The C++ code assumes all random effects (intercepts and slopes)
-#' # share the same standard deviation sigma_u.
-#' fit_slopes <- fit_binomial_glmm(y = y_slopes, X = X, Z = Z_slopes)
-#' print(fit_slopes)
-#' }
-fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u = 0) {
+fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
 
   # ---- 1. Data Validation and Preparation ----
   if (!is.numeric(y) || !all(y %in% c(0, 1))) {
@@ -85,7 +35,8 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
   tmb_data <- list(
     y = y, 
     X = X, 
-    Z = Z
+    Z = Z,
+    n_groups = n_groups
   )
   
   # ---- 2. Parameter Initialization ----
@@ -93,10 +44,14 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
     initial_betas <- rep(0, ncol(X))
   }
   
+  # Assumes 2 random effects per group (intercept and slope)
+  n_reff_per_group = 2 
+  
   tmb_params <- list(
     betas = initial_betas, 
     u = rep(0, ncol(Z)),
-    logsigma_u = initial_logsigma_u
+    log_stdevs = rep(0, n_reff_per_group),
+    transf_corr = 0
   )
   
   # ---- 3. TMB Model Fitting ----
@@ -118,18 +73,30 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
   report <- TMB::sdreport(obj)
   summary_report <- summary(report)
   
+  # 1. Fixed Effects
   num_fixed_effects <- ncol(X)
   fixed_eff_idx <- which(rownames(summary_report) == "betas")
-  
   correct_fixed_eff_idx <- fixed_eff_idx[1:num_fixed_effects]
   fixed_coeffs <- summary_report[correct_fixed_eff_idx, , drop = FALSE]
-  
   rownames(fixed_coeffs) <- if (!is.null(colnames(X))) colnames(X) else paste0("beta_", 1:nrow(fixed_coeffs))
   
-  random_eff_idx <- which(rownames(summary_report) == "sigma_u")
-  random_coeffs <- summary_report[random_eff_idx, , drop = FALSE]
-  rownames(random_coeffs) <- "sigma_u"
+  # 2. Random Effects Variance Components
+  stdev_idx <- which(rownames(summary_report) == "stdevs")
+  rho_idx <- which(rownames(summary_report) == "rho")
   
+  random_coeffs_stdevs <- summary_report[stdev_idx, , drop = FALSE]
+  random_coeffs_rho <- summary_report[rho_idx, , drop = FALSE]
+  
+  # Assign names (assuming 2 random effects: intercept and first slope)
+  re_names <- colnames(Z)[1:n_reff_per_group]
+  if (is.null(re_names)) re_names <- c("(Intercept)", "slope_1")
+  
+  rownames(random_coeffs_stdevs) <- paste0("sigma_", re_names)
+  rownames(random_coeffs_rho) <- paste0("corr_", re_names[1], "_", re_names[2])
+  
+  random_coeffs <- rbind(random_coeffs_stdevs, random_coeffs_rho)
+
+  # 3. Combine and Format
   final_summary <- rbind(fixed_coeffs, random_coeffs)
   colnames(final_summary) <- c("Estimate", "Std. Error")
   
