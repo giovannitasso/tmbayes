@@ -1,4 +1,6 @@
 #include <TMB.hpp>
+#include <vector>
+#include "density.hpp"
 
 template<class Type>
 Type objective_function<Type>::operator() () {
@@ -6,9 +8,10 @@ Type objective_function<Type>::operator() () {
 //==========================
 // DATA SECTION
 //==========================
-  DATA_VECTOR(y);          // binary response
-  DATA_MATRIX(X);          // design matrix for fixed effects
-  DATA_MATRIX(Z);          // random effects design matrix
+  DATA_VECTOR(y);
+  DATA_MATRIX(X);
+  DATA_MATRIX(Z);
+  DATA_INTEGER(n_groups); // Number of groups
 
   
 //==========================
@@ -16,50 +19,59 @@ Type objective_function<Type>::operator() () {
 //==========================
   PARAMETER_VECTOR(betas);  // fixed effects
   PARAMETER_VECTOR(u);      // random effects
-  PARAMETER(logsigma_u);    // log standard deviation of random effects
+  
+  // Parameters for unstructured covariance matrix
+  // Assumes 2 random effects per group (intercept and slope)
+  PARAMETER_VECTOR(log_stdevs);   // log(stdev) vector [log(sigma_int), log(sigma_slope)]
+  PARAMETER(transf_corr);      // Transformed correlation parameter
+
 
 //==========================
 // PRELIMINARY CALCULATIONS
 //==========================
-  // Transform log-standard deviation to standard deviation
-  Type sigma_u = exp(logsigma_u);
   
-  // Calculate the linear predictor
-  // eta = X*betas + Z*u
+  // Setup for MVN density
+  int n_reff_per_group = 2; 
+  density::UNSTRUCTURED_CORR_t<Type> nldens = density::UNSTRUCTURED_CORR_t<Type>(log_stdevs, transf_corr);
+  
+  // Linear predictor
   vector<Type> eta = X * betas + Z * u;
-  
-  // Apply the inverse-logit link function to get probabilities
   vector<Type> p = 1.0 / (1.0 + exp(-eta));
 
 //==========================
 // LIKELIHOOD SECTION
 //==========================
-  // Initialize the negative log-likelihood
   Type nll = 0.0;
 
-  // Prior for random effects: u ~ N(0, sigma_u^2)
-  // dnorm(x, mean, sd, give_log)
-  // The 'true' at the end means it returns the log-density.
-  // We subtract because we are calculating the *negative* log-likelihood.
-  nll -= sum(dnorm(u, Type(0.0), sigma_u, true));
+  // Prior for random effects: u ~ MVN(0, Sigma)
+  // We assume u is ordered as [int_g1, ..., int_gN, slope_g1, ..., slope_gN]
+  for(int i = 0; i < n_groups; ++i){
+    vector<Type> u_group_i(n_reff_per_group);
+    u_group_i(0) = u(i);              // Intercept for group i
+    u_group_i(1) = u(i + n_groups);   // Slope for group i
+    nll += nldens(u_group_i); // Adds *negative* log-density
+  }
 
   // Likelihood for the response: y_i ~ Binomial(1, p_i)
-  // dbinom(x, size, prob, give_log)
-  // We use Type(1.0) for the size of the binomial trial.
   nll -= sum(dbinom(y, Type(1.0), p, true));
 
 //============================   
 //     REPORT section
 //============================
-  // These quantities can be extracted from the model object in R
   REPORT(betas);
-  REPORT(sigma_u);
   REPORT(p);       
   REPORT(eta);
   REPORT(u);
   
-  // ADREPORT will calculate standard errors for these using the delta method
-  ADREPORT(sigma_u);
+  // Report variance components
+  vector<Type> stdevs = exp(log_stdevs);
+  Type rho = nldens.corr(0, 1);
+  
+  REPORT(stdevs);
+  REPORT(rho);
+  
+  ADREPORT(stdevs);
+  ADREPORT(rho);
 
   return nll;
 }
