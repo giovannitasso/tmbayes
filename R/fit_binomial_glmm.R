@@ -1,14 +1,13 @@
-#' @title Fit a Binomial Generalized Linear Mixed Model with TMB (Simple Version)
+#' @title Fit a Binomial Generalized Linear Mixed Model with TMB
 #' @description This function fits a binomial GLMM using a pre-compiled TMB model.
-#' This version uses a simplified random effects structure (single variance component).
+#' It handles full covariance structures for random effects.
 #'
 #' @param y A numeric vector representing the binary response variable (0s and 1s).
 #' @param X A numeric matrix of fixed effects covariates. An intercept is recommended.
 #' @param Z A numeric matrix for the random effects design.
+#' @param n_groups The number of grouping levels for the random effects.
 #' @param initial_betas A numeric vector for the starting values of the fixed effects (betas).
 #'        If NULL, defaults to zeros.
-#' @param initial_logsigma_u A single numeric value for the starting value of the log standard
-#'        deviation of the random effects. Defaults to 0.
 #'
 #' @return A list object of class `tmbr_fit` containing the model results.
 #' @export
@@ -16,7 +15,7 @@
 #' \dontrun{
 #' # This function is typically called internally by tmbr().
 #' }
-fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u = 0) {
+fit_binomial_glmm <- function(y, X, Z, n_groups, initial_betas = NULL) {
 
   # ---- 1. Data Validation and Preparation ----
   if (!is.numeric(y) || !all(y %in% c(0, 1))) {
@@ -35,8 +34,8 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
   tmb_data <- list(
     y = y, 
     X = X, 
-    Z = Z
-    # n_groups removed for this simple version
+    Z = Z,
+    n_groups = n_groups
   )
   
   # ---- 2. Parameter Initialization ----
@@ -44,11 +43,14 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
     initial_betas <- rep(0, ncol(X))
   }
   
-  # Reverted to simple parameterization
+  # Assumes 2 random effects per group (intercept and slope) for initialization
+  n_reff_per_group = 2 
+  
   tmb_params <- list(
     betas = initial_betas, 
     u = rep(0, ncol(Z)),
-    logsigma_u = initial_logsigma_u 
+    log_stdevs = rep(0, n_reff_per_group),
+    transf_corr = 0
   )
   
   # ---- 3. TMB Model Fitting ----
@@ -77,10 +79,25 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
   fixed_coeffs <- summary_report[correct_fixed_eff_idx, , drop = FALSE]
   rownames(fixed_coeffs) <- if (!is.null(colnames(X))) colnames(X) else paste0("beta_", 1:nrow(fixed_coeffs))
   
-  # 2. Random Effects Variance Component (Simple Version)
-  random_eff_idx <- which(rownames(summary_report) == "sigma_u")
-  random_coeffs <- summary_report[random_eff_idx, , drop = FALSE]
-  rownames(random_coeffs) <- "sigma_u"
+  # 2. Random Effects Variance Components
+  stdev_idx <- which(rownames(summary_report) == "stdevs")
+  rho_idx <- which(rownames(summary_report) == "rho")
+  
+  random_coeffs_stdevs <- summary_report[stdev_idx, , drop = FALSE]
+  random_coeffs_rho <- summary_report[rho_idx, , drop = FALSE]
+  
+  # Assign names (assuming 2 random effects: intercept and first slope)
+  # A more robust solution would parse random effect names from formula later
+  re_names <- colnames(Z)[1:n_reff_per_group]
+  if (is.null(re_names) || length(re_names) != n_reff_per_group) {
+      re_names <- c("(Intercept)", "slope_1") # Default names
+      warning("Could not automatically determine random effect names. Using defaults.")
+  }
+  
+  rownames(random_coeffs_stdevs) <- paste0("sigma_", re_names)
+  rownames(random_coeffs_rho) <- paste0("corr_", re_names[1], "_", re_names[2])
+  
+  random_coeffs <- rbind(random_coeffs_stdevs, random_coeffs_rho)
 
   # 3. Combine and Format
   final_summary <- rbind(fixed_coeffs, random_coeffs)
@@ -88,6 +105,7 @@ fit_binomial_glmm <- function(y, X, Z, initial_betas = NULL, initial_logsigma_u 
   
   final_summary <- as.data.frame(final_summary)
   
+  # Calculate z-values and p-values (note interpretation diff for variance components)
   final_summary$"z value" <- final_summary[, "Estimate"] / final_summary[, "Std. Error"]
   final_summary$"Pr(>|z|)" <- 2 * stats::pnorm(-abs(final_summary$"z value"))
   
