@@ -1,5 +1,5 @@
 #include <TMB.hpp>
-#include <vector>
+
 
 template<class Type>
 Type objective_function<Type>::operator() () {
@@ -37,10 +37,9 @@ Type objective_function<Type>::operator() () {
   vector<Type> eta = X * betas + Z * u;
   
   // Apply the inverse-logit link function to get probabilities
-  // We must explicitly cast the Eigen expression to vector<Type>
-  // to avoid lazy-evaluation template errors, as per TMB docs.
-  vector<Type> p = vector<Type>(1.0 / (1.0 + exp(-eta)));
-  
+  // Cast explícito para evitar errores de evaluación perezosa (lazy-evaluation).
+  vector<Type> p = vector<Type>(1.0 / (1.0 + exp(-eta))); 
+
 //==========================
 // LIKELIHOOD SECTION
 //==========================
