@@ -1,6 +1,6 @@
 #include <TMB.hpp>
 #include <vector>
-// La línea problemática que incluía "density.hpp" se ha eliminado.
+#include "library/density.hpp"
 
 template<class Type>
 Type objective_function<Type>::operator() () {
